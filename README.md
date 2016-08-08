@@ -19,7 +19,7 @@ You need to install Python2
 
 Deployment
 -----
-python cm_rest.py
+python rest_api.py
 
 AUTHOR(S)
 ---------
