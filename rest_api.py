@@ -54,4 +54,4 @@ def query():
   return json.dumps({'rid':j['rid']})
 
 
-run(host='121.254.173.77', port=7047)
+run(server='cherrypy', host='121.254.173.77', port=7047)
