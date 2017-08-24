@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import sys, os, json
+from mysql.connector import (connection)
 
 input_string = "{"
 
-input_string += "'input': {'string': 'Which rivers flow through Seoul?', 'language': 'en'}, 'rid': 1479716257692801, "
+input_string += "'input': {'string': 'Which rivers flow through Seoul?', 'language': 'en'}, 'rid': '1212',"
 #input_string += "'input': {'string': '서울을 흐르는 강은?', 'language': 'ko'}, "
 
 #input_string += "'input': [{'query': '', 'slots': []}], "
@@ -19,6 +20,6 @@ input_string += "}"
 
 input_string = '"' + input_string.replace("'", "\\\"") + '"'
 
-print 'python terminal_api.py ', input_string
+print 'python service_terminal.py ', input_string
 
-os.system('python terminal_api.py ' + input_string)
+os.system('python service_terminal.py ' + input_string)

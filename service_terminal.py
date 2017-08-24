@@ -1,32 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import sys, re, time
+import sys, re, time, os
 
 from bottle import route, run, template, request, response, post
 import urllib, urllib2, json
 
 from socket import timeout
-
-from mysql.connector import (connection)
-
-
-
-class DBConn:
-    def __init__(self, rid=""):
-        self.cnx = connection.MySQLConnection(user='root', password='okbqa', host='localhost', database='okbqa')
-        self.cursor = self.cnx.cursor()
-        self.rid = rid
-
-    def log(self, done, log):
-        if self.rid:
-            self.cursor.execute(("INSERT INTO `web_log`(`rid`, `done`, `log`) VALUES (%s, %s, %s)"), (self.rid, done, log))
-            self.cnx.commit()
-
-    def close(self):
-        if self.rid:
-            self.cursor.close()
-            self.cnx.close()
-
+					
 # Global variables
 defConf = {}
 newConf = {}
@@ -45,40 +25,56 @@ def main():
 	set_conf()
 
 	run_pipeline()
-	        
+			
 	bye()
-
 
 def set_inputs():
 	global jInputs
 	global jOutputs
-        global dbc
+	global dbc
 
 	jInputs['CM'] = json.loads(sys.argv[1])
+	
+	if 'rid' in jInputs['CM']:
+		from mysql.connector import (connection)
 
-        if 'rid' in jInputs['CM']:
-            dbc = DBConn(jInputs['CM']['rid'])
-        else:
-            dbc = DBConn()
-        
-	dbc.log(5, "The process was started ...")
-	#dbc.close()
+		class DBConn:
+			def __init__(self, rid=""):
+				self.cnx = connection.MySQLConnection(user='root', password='okbqa', host='localhost', database='okbqa')
+				self.cursor = self.cnx.cursor()
+				self.rid = rid
 
+			def log(self, done, log):
+				if self.rid:
+					self.cursor.execute(("INSERT INTO `web_log`(`rid`, `done`, `log`) VALUES (%s, %s, %s)"), (self.rid, done, log))
+					self.cnx.commit()
+
+			def close(self):
+				if self.rid:
+					self.cursor.close()
+					self.cnx.close()
+					
+		dbc = DBConn(jInputs['CM']['rid'])
+
+		dbc.log(5, "The process was started ...")
+		dbc.log(10, "The process is undergoing ...")
+		
 	write_log({'1. module': 'CM', '2. input': jInputs['CM']})
-
-        dbc.log(10, "The process is undergoing ...")
 
 def set_conf():
 	global defConf
 	global newConf
 	global jInputs
-        global dbc
-        dbc.log(15, "Setting configuration ...")
+	global dbc
+
+	if 'rid' in jInputs['CM']:
+		dbc.log(15, "Setting configuration ...")
 
 	def get_default():
 		global defConf
 
-		i_file = open('default.conf', 'r')
+		path = os.path.dirname(os.path.abspath(__file__))
+		i_file = open(path + '/default.conf', 'r')
 		sInput = i_file.read()
 		i_file.close()
 
@@ -86,10 +82,12 @@ def set_conf():
 
 		try:
 			if jInputs['CM']['input']['language'] == 'en':
-				i_file = open('default_en.conf', 'r')
+				path = os.path.dirname(os.path.abspath(__file__))
+				i_file = open(path + '/default_en.conf', 'r')
 
 			elif jInputs['CM']['input']['language'] == 'ko':
-				i_file = open('default_ko.conf', 'r')
+				path = os.path.dirname(os.path.abspath(__file__))
+				i_file = open(path + '/default_ko.conf', 'r')
 
 			sInput = i_file.read()
 			i_file.close()
@@ -102,26 +100,35 @@ def set_conf():
 	get_default()
 
 	newConf = defConf
-	newConf.update(jInputs['CM']['conf'])
-        dbc.log(20, "Configured ...")
-        
+	try:
+		newConf.update(jInputs['CM']['conf'])
+	except:
+		pass
+
+	if 'rid' in jInputs['CM']:
+		dbc.log(20, "Configured ...")
+		
 def run_pipeline():
 	global newConf
 	global result
 	global jInputs
 	global jOutputs
-        global dbc
-        dbc.log(25, "Pipeline was initiated ...")
+	global dbc
+
+	if 'rid' in jInputs['CM']:
+		dbc.log(25, "Pipeline was initiated ...")
 
 	pre_module = 'NONE'
 	jOutputs['NONE'] = jInputs['CM']['input']
 
-        i = 30
+	if 'rid' in jInputs['CM']:
+		i = 30
 	modules = newConf['sequence']
 	for module in modules:
 		for address in newConf['address'][module]:
-			dbc.log(i, module + " is running at " + address + " ...")
-                        i += 2
+			if 'rid' in jInputs['CM']:
+				dbc.log(i, module + " is running at " + address + " ...")
+				i += 2
 
 			# 입력 예외처리
 			if pre_module == 'NONE' and module == 'ELU':
@@ -184,8 +191,9 @@ def run_pipeline():
 
 			elif pre_module == 'QGM' and module == 'AGM':
 				for (kb_address, graph_uri) in newConf['address']['KB']:
-					dbc.log(70, "AGM is running on " + graph_uri + " in " + kb_address + " ...")
-                                        i = 70
+					if 'rid' in jInputs['CM']:
+						dbc.log(70, "AGM is running on " + graph_uri + " in " + kb_address + " ...")
+						i = 70
 					AGM_conf = {'kb_addresses': kb_address, 'graph_uri': graph_uri}
 
 					jInput = {}
@@ -206,8 +214,9 @@ def run_pipeline():
 				start_time = time.time()
 
 				sInput = json.dumps(jInput)
-                                dbc.log(i, module + " is running at " + address + " ...");
-                                i += 1
+				if 'rid' in jInputs['CM']:
+					dbc.log(i, module + " is running at " + address + " ...");
+					i += 1
 				jOutput = json.loads(exec_module(module, address, sInput))
 
 				elapsed_time = time.time() - start_time
@@ -236,15 +245,12 @@ def run_pipeline():
 
 	bye()
 
-
 def exec_module(module, address, sInput):
-	
-
 	sOutput = 'null'
 
 	try:
 		# GET / POST transition
-		if address == 'http://ws.okbqa.org:2357/agdistis/run': 
+		if 'agdistis/run' in address: 
 			# AGDISTIS only supports the GET method.
 			sOutput = send_getrequest(address + '?data=' + urllib.quote(sInput.replace('\\"','"').replace('|','_')))
 		else:
@@ -259,18 +265,15 @@ def exec_module(module, address, sInput):
 
 	return sOutput
 
-
 def send_getrequest(url):
 	opener = urllib2.build_opener()
 	request = urllib2.Request(url)
 	return opener.open(request, timeout=newConf['timelimit']).read()
 	
-
 def send_postrequest(url, input_string):
 	opener = urllib2.build_opener()
 	request = urllib2.Request(url, data=input_string, headers={'Content-Type':'application/json'})
 	return opener.open(request, timeout=newConf['timelimit']).read()
-
 
 def check_fault(module, address, sInput, sOutput):
 	# Fault alarming - Empty error
@@ -291,34 +294,34 @@ def check_fault(module, address, sInput, sOutput):
 	except:
 		fault({'1. module': module, '2. exception': 'output is not formattd in JSON', '3. address': address, '4. input': sInput, '5. output': sOutput})
 
-
 def write_log(l):
 	global log
-        global dbc
+	global dbc
 
-        dbc.log(-1, json.dumps(l))
+	if 'rid' in jInputs['CM']:
+		dbc.log(-1, json.dumps(l))
 
 	log.append(l)
-
 
 def fault(l):
 	write_log(l)
 	bye()
 
-
 def bye():
 	global result
-        global dbc
-        dbc.log(99, "The process was ended ...")
+	global dbc
+
+	if 'rid' in jInputs['CM']:
+		dbc.log(99, "The process was ended ...")
 
 	output = json.dumps({'log': log, 'result': result}, indent=5, separators=(',', ': '), sort_keys=True)
 
-        dbc.log(100, output)
-        dbc.close()
+	if 'rid' in jInputs['CM']:
+		dbc.log(100, output)
+		dbc.close()
 
 	sys.stdout.write(output)
 	sys.stdout.flush()
 	sys.exit(0)
 	
-
 main()
