@@ -20,7 +20,7 @@ You need to install Python2
 
 Deployment
 -----
-python rest_api.py
+python service_rest.py
 
 AUTHOR(S)
 ---------
