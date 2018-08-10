@@ -3,7 +3,7 @@ OKBQA Control Module 2016
 
 General description
 -----
-Please refer to: https://sites.google.com/site/okbqa0/architecture/control.
+Please refer to: http://doc.okbqa.org/control-module/v2/.
 
 Updates
 -----
@@ -23,6 +23,7 @@ python rest_api.py
 AUTHOR(S)
 ---------
 * Jiseong Kim, MachineReadingLab@KAIST
+* jiseong@kaista.ac.kr
 
 License
 -------
