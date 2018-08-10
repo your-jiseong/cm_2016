@@ -18,7 +18,7 @@ Prerequisite
 
 How to run
 -----
-python service_rest.py
+python rest_api.py
 
 AUTHOR(S)
 ---------
