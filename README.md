@@ -23,7 +23,7 @@ python rest_api.py
 AUTHOR(S)
 ---------
 * Jiseong Kim, MachineReadingLab@KAIST
-* jiseong@kaista.ac.kr
+* jiseong@kaist.ac.kr
 
 License
 -------
